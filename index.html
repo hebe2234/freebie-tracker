@@ -42,6 +42,11 @@
   .meta-row { margin-top:.45rem; display:flex; gap:.9rem; align-items:center; font-size:.8rem; color:var(--muted); }
   .clicks b { color:var(--ink); }
   .report { color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent); cursor:pointer; }
+  .share-row { display:flex; gap:.45rem; flex-wrap:wrap; align-items:center; margin:0 0 1rem; font-size:.85rem; }
+  .share-label { color:var(--muted); margin-right:.2rem; }
+  .share-row a, .share-row button { border:1px solid var(--line); background:var(--card); border-radius:99px; padding:.3rem .85rem; cursor:pointer; font-size:.82rem; color:var(--ink); text-decoration:none; }
+  .suggest-btn { display:inline-block; background:var(--accent); color:#fff; padding:.5rem 1.2rem; border-radius:8px; text-decoration:none; margin-top:.4rem; }
+  .muted { color:var(--muted); font-size:.9rem; }
   /* 未來放廣告：把廣告碼貼在下方預留區 */
   .ad-slot { display:none; }
 </style>
@@ -61,6 +66,7 @@
 </div>
 
 <main>
+  <div class="share-row" id="share-row"></div>
   <div class="tip" id="tip"></div>
   <div class="tabs" id="tabs"></div>
   <div id="list"></div>
@@ -88,7 +94,7 @@
    1) 去 https://analytics.google.com 建 GA4 資源，拿到評估 ID（G- 開頭）
    2) 把下面 GA_ID 換成你的 ID，重新上傳 index.html
    還沒填之前網站照常用，只是沒有全站統計。卡片上的點擊數是「這台裝置」的本機統計。 */
-const GA_ID = "G-XXXXXXX";
+const GA_ID = "G-ZZY73BJF3Y";
 if(GA_ID && GA_ID.indexOf("G-XXX")!==0){
   var _s=document.createElement("script"); _s.async=true;
   _s.src="https://www.googletagmanager.com/gtag/js?id="+GA_ID;
@@ -116,7 +122,61 @@ function trackClick(ck, name){
 function reportUrl(nm){
   var title=encodeURIComponent("[回報] "+nm);
   var body=encodeURIComponent("問題類型（留一項）: 連結失效 / 活動結束 / 心得分享\n\n說明:\n");
-  return "https://github.com/hebe2234/freebie-tracker/issues/new?title="+title+"&body="+body;
+  return "https://github.com/hebe2234/freebie-tracker/issues/new?labels=report&title="+title+"&body="+body;
+}
+const SUGT = {
+tab:{zh:"💡 建議區",en:"💡 Suggestions",de:"💡 Vorschläge",fr:"💡 Suggestions",ja:"💡 提案",ko:"💡 제안",es:"💡 Sugerencias",hi:"💡 सुझाव"},
+title:{zh:"💡 用戶建議區",en:"💡 Community suggestions",de:"💡 Vorschläge der Community",fr:"💡 Suggestions de la communauté",ja:"💡 みんなの提案",ko:"💡 커뮤니티 제안",es:"💡 Sugerencias de la comunidad",hi:"💡 समुदाय के सुझाव"},
+desc:{zh:"發現新的免費試用來源？提交建議，通過審核就會加入清單！",en:"Found a new freebie source? Submit a suggestion — approved ones get added to the list!",de:"Neue Gratisquelle gefunden? Vorschlag einreichen — freigegebene kommen auf die Liste!",fr:"Une nouvelle source d'échantillons ? Proposez-la — les suggestions approuvées rejoignent la liste !",ja:"新しい無料サンプル情報を見つけた？提案してね。承認されたらリストに追加します！",ko:"새로운 무료 샘플 정보를 찾았나요? 제안해 주세요. 승인되면 목록에 추가됩니다!",es:"¿Encontraste una fuente nueva? Envía tu sugerencia; ¡las aprobadas se añaden a la lista!",hi:"कोई नया मुफ्त स्रोत मिला? सुझाव भेजें — स्वीकृत सुझाव सूची में जोड़े जाएँगे!"},
+btn:{zh:"➕ 提交建議",en:"➕ Submit a suggestion",de:"➕ Vorschlag einreichen",fr:"➕ Proposer",ja:"➕ 提案する",ko:"➕ 제안하기",es:"➕ Enviar sugerencia",hi:"➕ सुझाव भेजें"},
+loading:{zh:"載入建議中…",en:"Loading suggestions…",de:"Vorschläge werden geladen…",fr:"Chargement des suggestions…",ja:"提案を読み込み中…",ko:"제안을 불러오는 중…",es:"Cargando sugerencias…",hi:"सुझाव लोड हो रहे हैं…"},
+empty:{zh:"還沒有建議，來當第一個吧！",en:"No suggestions yet — be the first!",de:"Noch keine Vorschläge — sei der/die Erste!",fr:"Aucune suggestion pour l'instant — soyez le premier !",ja:"まだ提案がありません。最初の提案者に！",ko:"아직 제안이 없어요. 첫 번째 제안자가 되어보세요!",es:"Aún no hay sugerencias, ¡sé la primera persona!",hi:"अभी कोई सुझाव नहीं — पहले बनें!"},
+error:{zh:"載入失敗，請稍後再試。",en:"Failed to load. Please try again later.",de:"Laden fehlgeschlagen. Bitte später erneut versuchen.",fr:"Échec du chargement. Réessayez plus tard.",ja:"読み込みに失敗しました。後でもう一度お試しください。",ko:"불러오기에 실패했습니다. 나중에 다시 시도하세요.",es:"Error al cargar. Inténtalo más tarde.",hi:"लोड विफल। बाद में पुनः प्रयास करें।"},
+comments:{zh:"則留言",en:"comments",de:"Kommentare",fr:"commentaires",ja:"件のコメント",ko:"개의 댓글",es:"comentarios",hi:"टिप्पणियाँ"},
+share:{zh:"📣 分享給朋友：",en:"📣 Share:",de:"📣 Teilen:",fr:"📣 Partager :",ja:"📣 シェア：",ko:"📣 공유하기:",es:"📣 Compartir:",hi:"📣 शेयर करें:"},
+copied:{zh:"連結已複製！",en:"Link copied!",de:"Link kopiert!",fr:"Lien copié !",ja:"リンクをコピーしました！",ko:"링크가 복사되었습니다!",es:"¡Enlace copiado!",hi:"लिंक कॉपी हो गया!"}
+};
+function sx(k){ return SUGT[k][lang]||SUGT[k].en; }
+function escapeHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function suggestUrl(){
+  var body=encodeURIComponent("## 建議的免費來源\n名稱：\n連結：\n說明：\n\n## 為什麼值得加入\n");
+  return "https://github.com/hebe2234/freebie-tracker/issues/new?labels=suggestion&title="+encodeURIComponent("[建議] ")+"&body="+body;
+}
+function renderShare(){
+  var url=encodeURIComponent("https://hebe2234.github.io/freebie-tracker/");
+  var text=encodeURIComponent(document.title);
+  var row=document.getElementById("share-row"); if(!row) return;
+  row.innerHTML='<span class="share-label">'+sx("share")+'</span>'+
+   '<a target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text='+text+'&url='+url+'">X</a>'+
+   '<a target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u='+url+'">Facebook</a>'+
+   '<a target="_blank" rel="noopener" href="https://social-plugins.line.me/lineit/share?url='+url+'">LINE</a>'+
+   '<a target="_blank" rel="noopener" href="https://wa.me/?text='+text+'%20'+url+'">WhatsApp</a>'+
+   '<a target="_blank" rel="noopener" href="https://t.me/share/url?url='+url+'&text='+text+'">Telegram</a>'+
+   '<button id="copy-link" type="button">🔗 Link</button>';
+  document.getElementById("copy-link").onclick=function(){
+    if(navigator.clipboard){ navigator.clipboard.writeText("https://hebe2234.github.io/freebie-tracker/").then(function(){ alert(sx("copied")); }); }
+  };
+}
+function renderSuggestTab(box){
+  var intro=document.createElement("div"); intro.className="tip";
+  intro.innerHTML="<strong>"+escapeHtml(sx("title"))+"</strong><br>"+escapeHtml(sx("desc"))+'<br><a class="suggest-btn" target="_blank" rel="noopener" href="'+suggestUrl()+'">'+escapeHtml(sx("btn"))+"</a>";
+  box.appendChild(intro);
+  var list=document.createElement("div"); list.id="suggest-list"; box.appendChild(list);
+  loadSuggest();
+}
+function loadSuggest(){
+  var box=document.getElementById("suggest-list"); if(!box) return;
+  box.innerHTML='<p class="muted">'+escapeHtml(sx("loading"))+'</p>';
+  fetch("https://api.github.com/repos/hebe2234/freebie-tracker/issues?labels=suggestion&state=open&per_page=20")
+    .then(function(r){ return r.json(); }).then(function(arr){
+      arr=(arr||[]).filter(function(i){ return !i.pull_request; });
+      if(!arr.length){ box.innerHTML='<p class="muted">'+escapeHtml(sx("empty"))+'</p>'; return; }
+      box.innerHTML=arr.map(function(i){
+        return '<div class="card"><div><div class="name"><a href="'+i.html_url+'" target="_blank" rel="noopener">'+escapeHtml(i.title)+'</a></div>'+
+        '<p class="desc">'+escapeHtml((i.body||"").slice(0,140))+'</p>'+
+        '<div class="meta-row"><span>💬 '+i.comments+' '+escapeHtml(sx("comments"))+'</span><span>'+String(i.created_at).slice(0,10)+'</span></div></div></div>';
+      }).join("");
+    }).catch(function(){ box.innerHTML='<p class="muted">'+escapeHtml(sx("error"))+'</p>'; });
 }
 const LANGS = [
   {id:"zh", label:"繁體中文", html:"zh-Hant"},
@@ -221,18 +281,20 @@ function applyLang(){
     b.onclick = ()=>{ lang=L2.id; save(); applyLang(); renderTabs(); renderList(); renderProgress(); };
     lb.appendChild(b);
   });
+  renderShare();
 }
 function renderTabs(){
   const tb = document.getElementById("tabs"); tb.innerHTML = "";
-  [["us","tab_us"],["tw","tab_tw"],["daily","tab_daily"]].forEach(([c,k])=>{
+  [["us","tab_us"],["tw","tab_tw"],["daily","tab_daily"],["suggest","tab_suggest"]].forEach(([c,k])=>{
     const b = document.createElement("button");
-    b.textContent = t(k); b.className = c===activeCat ? "active" : "";
+    b.textContent = (k==="tab_suggest") ? sx("tab") : t(k); b.className = c===activeCat ? "active" : "";
     b.onclick = ()=>{ activeCat=c; renderTabs(); renderList(); };
     tb.appendChild(b);
   });
 }
 function renderList(){
   const box = document.getElementById("list"); box.innerHTML = "";
+  if(activeCat==="suggest"){ renderSuggestTab(box); return; }
   if(activeCat==="tw"){
     const note=document.createElement("div"); note.className="tip"; note.textContent=t("twNote");
     box.appendChild(note);
