@@ -39,6 +39,9 @@
   .add-form button { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:.6rem 1.4rem; cursor:pointer; font-size:.95rem; margin-top:.4rem; }
   footer { text-align:center; color:var(--muted); font-size:.82rem; padding:2rem 1rem; }
   .tip { background:#fff8ea; border:1px solid #f3dfae; border-radius:12px; padding:.9rem 1.1rem; font-size:.9rem; margin-bottom:1rem; }
+  .meta-row { margin-top:.45rem; display:flex; gap:.9rem; align-items:center; font-size:.8rem; color:var(--muted); }
+  .clicks b { color:var(--ink); }
+  .report { color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent); cursor:pointer; }
   /* 未來放廣告：把廣告碼貼在下方預留區 */
   .ad-slot { display:none; }
 </style>
@@ -80,6 +83,41 @@
 <div class="ad-slot"></div>
 
 <script>
+/* ===== 網站分析設定 =====
+   全站流量＋每個連結的真實點擊率，看 GA4 後台：
+   1) 去 https://analytics.google.com 建 GA4 資源，拿到評估 ID（G- 開頭）
+   2) 把下面 GA_ID 換成你的 ID，重新上傳 index.html
+   還沒填之前網站照常用，只是沒有全站統計。卡片上的點擊數是「這台裝置」的本機統計。 */
+const GA_ID = "G-XXXXXXX";
+if(GA_ID && GA_ID.indexOf("G-XXX")!==0){
+  var _s=document.createElement("script"); _s.async=true;
+  _s.src="https://www.googletagmanager.com/gtag/js?id="+GA_ID;
+  document.head.appendChild(_s);
+  window.dataLayer=window.dataLayer||[];
+  window.gtag=function(){dataLayer.push(arguments);};
+  gtag("js",new Date()); gtag("config",GA_ID);
+}
+const EXTRA = {
+report:{zh:"💬 回報",en:"💬 Report",de:"💬 Melden",fr:"💬 Signaler",ja:"💬 報告する",ko:"💬 신고하기",es:"💬 Informar",hi:"💬 रिपोर्ट करें"},
+clicks:{zh:"點擊（此裝置）",en:"clicks (this device)",de:"Klicks (dieses Gerät)",fr:"clics (cet appareil)",ja:"クリック（この端末）",ko:"클릭(이 기기)",es:"clics (este dispositivo)",hi:"क्लिक (यह डिवाइस)"}
+};
+function ex(k){ return EXTRA[k][lang] || EXTRA[k].en; }
+function clickCount(ck){
+  try{ return (JSON.parse(localStorage.getItem("freebie-clicks")||"{}"))[ck]||0; }catch(e){ return 0; }
+}
+function trackClick(ck, name){
+  try{
+    var c=JSON.parse(localStorage.getItem("freebie-clicks")||"{}");
+    c[ck]=(c[ck]||0)+1; localStorage.setItem("freebie-clicks",JSON.stringify(c));
+    var b=document.querySelector('[data-ck="'+ck+'"]'); if(b) b.textContent=c[ck];
+  }catch(e){}
+  if(window.gtag){ gtag("event","outbound_click",{"item_name":name}); }
+}
+function reportUrl(nm){
+  var title=encodeURIComponent("[回報] "+nm);
+  var body=encodeURIComponent("問題類型（留一項）: 連結失效 / 活動結束 / 心得分享\n\n說明:\n");
+  return "https://github.com/hebe2234/freebie-tracker/issues/new?title="+title+"&body="+body;
+}
 const LANGS = [
   {id:"zh", label:"繁體中文", html:"zh-Hant"},
   {id:"en", label:"English", html:"en"},
@@ -205,10 +243,14 @@ function renderList(){
     const nm = it.name[lang] || it.name.en, ds = it.desc[lang] || it.desc.en;
     const d = document.createElement("div");
     d.className = "card" + (done?" done":"");
+    const ck = ("c|"+k).replace(/"/g,"");
+    const safeNm = nm.replace(/\\/g,"").replace(/'/g,"");
     let html = '<input type="checkbox" class="check" '+(done?"checked":"")+' aria-label="done">' +
-      '<div><div class="name"><a href="'+it.url+'" target="_blank" rel="noopener">'+nm+'</a></div>' +
+      '<div><div class="name"><a href="'+it.url+'" target="_blank" rel="noopener" onclick="trackClick(\''+ck+'\',\''+safeNm+'\')">'+nm+'</a></div>' +
       '<div style="margin:.25rem 0">'+(it.tags||[]).map(tg=>'<span class="tag'+(TAGS[tg].hl?" review":"")+'">'+TAGS[tg][lang]+'</span>').join("")+'</div>' +
-      '<p class="desc">'+ds+'</p></div>';
+      '<p class="desc">'+ds+'</p>' +
+      '<div class="meta-row"><span class="clicks">👆 <b data-ck="'+ck+'">'+clickCount(ck)+'</b> '+ex("clicks")+'</span>' +
+      '<a class="report" href="'+reportUrl(safeNm)+'" target="_blank" rel="noopener">'+ex("report")+'</a></div></div>';
     if(it.custom) html += '<div class="actions"><button>'+t("del")+'</button></div>';
     d.innerHTML = html;
     d.querySelector(".check").onchange = e=>{ state[k]=e.target.checked; save(); renderList(); renderProgress(); };
