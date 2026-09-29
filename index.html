@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>免費試用追蹤站 | Freebie Tracker</title>
+<meta name="description" content="免費試用包、試用品申請追蹤清單：美國與台灣可申請來源整理，申請進度自己打勾追蹤。">
+<style>
+  :root { --bg:#faf7f2; --card:#fff; --ink:#2b2b2b; --muted:#8a8a8a; --accent:#e07856; --accent2:#5b8c5a; --line:#eee3d6; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; background:var(--bg); color:var(--ink); margin:0; line-height:1.7; }
+  header { background:linear-gradient(135deg,#e07856,#d1a24a); color:#fff; padding:2.2rem 1.2rem 1.6rem; text-align:center; }
+  header h1 { margin:0 0 .3rem; font-size:1.7rem; }
+  header p { margin:0; opacity:.92; font-size:.95rem; }
+  .progress-wrap { max-width:860px; margin:-1.1rem auto 0; padding:0 1.2rem; }
+  .progress-card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:1rem 1.2rem; box-shadow:0 4px 14px rgba(0,0,0,.05); }
+  .bar { height:10px; background:#f0e7d8; border-radius:99px; overflow:hidden; margin-top:.5rem; }
+  .bar > div { height:100%; background:linear-gradient(90deg,var(--accent),#d1a24a); width:0%; transition:width .4s; }
+  main { max-width:860px; margin:0 auto; padding:1.2rem 1.2rem 3rem; }
+  .tabs { display:flex; gap:.5rem; margin:1.2rem 0; flex-wrap:wrap; }
+  .tabs button { border:1px solid var(--line); background:var(--card); border-radius:99px; padding:.45rem 1.1rem; cursor:pointer; font-size:.95rem; }
+  .tabs button.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:1rem 1.2rem; margin-bottom:.8rem; display:flex; gap:.9rem; align-items:flex-start; }
+  .card.done { opacity:.62; }
+  .card.done .name { text-decoration:line-through; }
+  .check { width:26px; height:26px; margin-top:.15rem; accent-color:var(--accent2); flex:none; cursor:pointer; }
+  .name { font-weight:700; }
+  .name a { color:var(--ink); text-decoration:none; border-bottom:2px solid #f3d9a4; }
+  .desc { font-size:.9rem; color:#555; margin:.25rem 0 0; }
+  .tag { display:inline-block; font-size:.72rem; background:#fdf0e2; color:#a05a2c; border-radius:99px; padding:.1rem .6rem; margin-right:.3rem; }
+  .tag.review { background:#e8f3e8; color:#3f6b3f; }
+  .actions { margin-left:auto; flex:none; display:flex; gap:.4rem; }
+  .actions button { border:1px solid var(--line); background:#fff; border-radius:8px; padding:.25rem .6rem; cursor:pointer; font-size:.8rem; color:var(--muted); }
+  .add-form { background:var(--card); border:1px dashed #d9c6a8; border-radius:14px; padding:1rem 1.2rem; margin-top:1.4rem; }
+  .add-form input, .add-form select { width:100%; padding:.55rem .7rem; margin:.3rem 0; border:1px solid var(--line); border-radius:8px; font-size:.95rem; }
+  .add-form button { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:.6rem 1.4rem; cursor:pointer; font-size:.95rem; margin-top:.4rem; }
+  footer { text-align:center; color:var(--muted); font-size:.82rem; padding:2rem 1rem; }
+  .tip { background:#fff8ea; border:1px solid #f3dfae; border-radius:12px; padding:.9rem 1.1rem; font-size:.9rem; margin-bottom:1rem; }
+  /* 未來放廣告：把廣告碼貼在下方預留區 */
+  .ad-slot { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎁 免費試用追蹤站</h1>
+  <p>免費試用包・試用品申請清單 — 申請進度自己打勾，寄到就送朋友！</p>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-card">
+    <div><strong id="pct">0%</strong> <span style="color:var(--muted);font-size:.9rem" id="count"></span></div>
+    <div class="bar"><div id="barfill"></div></div>
+  </div>
+</div>
+
+<main>
+  <div class="tip">💡 有些名額有限、活動說結束就結束，申請前先確認頁面還能下單。大部分試用條款只限制「轉售」，自己用或送朋友都沒問題。</div>
+  <div class="tabs" id="tabs"></div>
+  <div id="list"></div>
+
+  <div class="add-form">
+    <strong>➕ 發現新的免費試用？加進來</strong>
+    <input id="f-name" placeholder="名稱（例：XX 品牌試用包）">
+    <input id="f-url" placeholder="連結（https://…）">
+    <input id="f-desc" placeholder="說明（例：填問卷領取，每月限量）">
+    <select id="f-cat"><option value="us">🇺🇸 美國區</option><option value="tw">🇹🇼 台灣區</option><option value="daily">📰 每日情報站</option></select>
+    <button onclick="addCustom()">加入清單</button>
+  </div>
+</main>
+
+<footer>
+  最後更新：2026-09-29 ｜ 活動可能隨時結束，以各官網為準<br>
+  Made with ♥ for Hebe's 免費賺錢計畫
+</footer>
+
+<!-- 未來放廣告預留區（例：AdSense）：流量起來後把廣告碼貼到 .ad-slot 並改為 display:block -->
+<div class="ad-slot"></div>
+
+<script>
+const DATA = [
+ // ---------- 美國區 ----------
+ {cat:"us", name:"SampleSource", url:"https://www.samplesource.com", desc:"季節性 sample box，一次十幾樣（美妝、清潔、食品），免運。開信通知一到就去搶，名額很快沒。", tags:["免運","季節限定"]},
+ {cat:"us", name:"PINCHme", url:"https://offers.pinchme.com", desc:"每週二 Sample Tuesday 開搶，大品牌（Olay、Dyson 等）常出現，要寫簡單使用回饋。", tags:["每週二","要寫回饋"]},
+ {cat:"us", name:"Social Nature", url:"https://www.socialnature.com", desc:"申請試用，入選後寄免費產品兌換券，去指定商店換有機/天然產品，要寫短評。", tags:["兌換券","要寫短評"]},
+ {cat:"us", name:"Influenster（VoxBox）", url:"https://www.influenster.com", desc:"試用箱常是正裝！先填滿檔案、綁社群帳號、多互動，越活躍越容易被選中，要寫評測。", tags:["常是正裝","要寫評測"]},
+ {cat:"us", name:"Smiley360 / Vocalpoint / BzzAgent", url:"https://smiley.socialmedialink.com", desc:"試用換分享型社群，適合喜歡在社群發心得的人。", tags:["要分享"]},
+ {cat:"us", name:"J&J Friends & Neighbors", url:"https://jjfriendsandneighbors.com", desc:"嬌生美妝/個護產品測試，填問卷入會，有些測試還有酬勞。", tags:["問卷入會"]},
+ {cat:"us", name:"Moms Meet / PTPA", url:"https://momsmeet.com", desc:"爸媽向：母嬰、健康食品試用，試用換心得。", tags:["母嬰"]},
+ {cat:"us", name:"InStyle Trendsetters / Snuggle Bear Den", url:"https://www.instyletrendsetters.com", desc:"流行美妝問卷＋新品試用；Snuggle 是洗衣香氛品牌任務制。", tags:["問卷"]},
+ {cat:"us", name:"Amazon Send Me a Sample", url:"https://www.amazon.com", desc:"對 Alexa 說 “send me a sample”，看到有 Send Me a Sample 標誌的品牌就能領。", tags:["Alexa"]},
+ // ---------- 每日情報站 ----------
+ {cat:"daily", name:"Hip2Save 免費情報", url:"https://hip2save.com/freebies/", desc:"每天更新，親測過才上架，最值得每天掃一遍。", tags:["每日更新"]},
+ {cat:"daily", name:"The Freebie Guy", url:"https://thefreebieguy.com", desc:"免費情報聚合，新的試用活動即時貼出。", tags:["聚合站"]},
+ {cat:"daily", name:"Freeflys", url:"https://www.freeflys.com", desc:"分類清楚的試用情報站（美妝/母嬰/食品/健康），免註冊瀏覽。", tags:["聚合站"]},
+ {cat:"daily", name:"Yo! Free Samples / ILFT", url:"https://yo freesamples.com".replace(" ",""), desc:"每日更新的免費試用清單，無問卷牆。", tags:["聚合站"]},
+ {cat:"daily", name:"The Penny Hoarder", url:"https://www.thepennyhoarder.com/save-money/free-samples-online/", desc:"整理過的合法試用網站清單，附注意事項。", tags:["整理文"]},
+ // ---------- 台灣區 ----------
+ {cat:"tw", name:"Dcard 美妝板情報串", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"「試用包免運寄到家」持續更新，幾十個品牌 0 元下單寄到家。點進去還能下單＝活動還在。", tags:["必看","0元免運"]},
+ {cat:"tw", name:"理膚寶水蝦皮官方商城", url:"https://shopee.tw", desc:"蝦皮搜官方商城，結帳輸入折扣碼 38Gfree（先清空購物車含贈品券才有免運）。", tags:["折扣碼"]},
+ {cat:"tw", name:"大春煉皂", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"每個月前 200 名免費，每月初去搶。詳見 Dcard 情報串連結。", tags:["每月限量"]},
+ {cat:"tw", name:"唯白衛生棉", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"每月抽 100 名。詳見 Dcard 情報串連結。", tags:["每月抽獎"]},
+ {cat:"tw", name:"彤芙園 / 希素", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"彤芙園填問卷領取；希素加 LINE 好友對話框填寫領護手霜。", tags:["問卷/LINE"]},
+ {cat:"tw", name:"品牌試用包名單", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"綠藤生機、寶拉珍選、雅漾、Akimia 面膜、Pleine 面膜、護妍天使、三心潔顏、川息面膜、SYShop 等，完整名單見情報串。", tags:["名單"]},
+ {cat:"tw", name:"媽媽會路線", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"幫寶適、好奇等品牌官網加入會員，免費領尿布試用裝＋現金券，媽媽社團需求大。", tags:["母嬰"]},
+];
+const CATS = {us:"🇺🇸 美國區", tw:"🇹🇼 台灣區", daily:"📰 每日情報站"};
+let state = JSON.parse(localStorage.getItem("freebie-tracker-v1") || "{}");
+let activeCat = "us";
+let custom = JSON.parse(localStorage.getItem("freebie-custom-v1") || "[]");
+
+function save(){ localStorage.setItem("freebie-tracker-v1", JSON.stringify(state)); localStorage.setItem("freebie-custom-v1", JSON.stringify(custom)); }
+function key(it, i){ return (it.url||"") + "|" + it.name + "|" + i; }
+function all(){ return DATA.concat(custom); }
+function renderTabs(){
+  const t = document.getElementById("tabs"); t.innerHTML = "";
+  Object.keys(CATS).forEach(c=>{
+    const b = document.createElement("button");
+    b.textContent = CATS[c]; b.className = c===activeCat ? "active" : "";
+    b.onclick = ()=>{ activeCat=c; renderTabs(); renderList(); };
+    t.appendChild(b);
+  });
+}
+function renderList(){
+  const box = document.getElementById("list"); box.innerHTML = "";
+  all().forEach((it,i)=>{
+    if(it.cat!==activeCat) return;
+    const k = key(it,i), done = !!state[k];
+    const d = document.createElement("div");
+    d.className = "card" + (done?" done":"");
+    d.innerHTML =
+      '<input type="checkbox" class="check" '+(done?"checked":"")+' aria-label="已申請">' +
+      '<div><div class="name"><a href="'+it.url+'" target="_blank" rel="noopener">'+it.name+'</a></div>' +
+      '<div style="margin:.25rem 0">'+(it.tags||[]).map(t=>'<span class="tag'+(t.includes("回饋")||t.includes("評")||t.includes("分享")?" review":"")+'">'+t+'</span>').join("")+'</div>' +
+      '<p class="desc">'+it.desc+'</p></div>' +
+      (it.custom ? '<div class="actions"><button onclick="delCustom('+i+')">刪除</button></div>' : '');
+    d.querySelector(".check").onchange = e=>{ state[k]=e.target.checked; save(); renderList(); renderProgress(); };
+    box.appendChild(d);
+  });
+  if(activeCat==="tw"){
+    const note=document.createElement("div"); note.className="tip";
+    note.textContent="⚠️ 台灣區需要台灣收件地址，人在國外可請家人代收。";
+    box.prepend(note);
+  }
+}
+function renderProgress(){
+  const items = all(), total = items.length;
+  const done = items.filter((it,i)=>state[key(it,i)]).length;
+  const pct = total? Math.round(done/total*100):0;
+  document.getElementById("pct").textContent = pct + "%";
+  document.getElementById("count").textContent = "已申請 "+done+" / "+total;
+  document.getElementById("barfill").style.width = pct+"%";
+}
+function addCustom(){
+  const name=document.getElementById("f-name").value.trim(), url=document.getElementById("f-url").value.trim()||"#",
+        desc=document.getElementById("f-desc").value.trim(), cat=document.getElementById("f-cat").value;
+  if(!name){ alert("請填名稱"); return; }
+  custom.push({cat, name, url, desc:desc||"網友推薦的新發現", tags:["新增"], custom:true});
+  save(); activeCat=cat; renderTabs(); renderList(); renderProgress();
+  document.getElementById("f-name").value=""; document.getElementById("f-url").value=""; document.getElementById("f-desc").value="";
+}
+function delCustom(i){ custom.splice(i-DATA.length,1); save(); renderList(); renderProgress(); }
+renderTabs(); renderList(); renderProgress();
+</script>
+</body>
+</html>
