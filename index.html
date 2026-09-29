@@ -8,11 +8,14 @@
 <style>
   :root { --bg:#faf7f2; --card:#fff; --ink:#2b2b2b; --muted:#8a8a8a; --accent:#e07856; --accent2:#5b8c5a; --line:#eee3d6; }
   * { box-sizing:border-box; }
-  body { font-family:-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; background:var(--bg); color:var(--ink); margin:0; line-height:1.7; }
+  body { font-family:-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei","Noto Sans",sans-serif; background:var(--bg); color:var(--ink); margin:0; line-height:1.7; }
   header { background:linear-gradient(135deg,#e07856,#d1a24a); color:#fff; padding:2.2rem 1.2rem 1.6rem; text-align:center; }
   header h1 { margin:0 0 .3rem; font-size:1.7rem; }
   header p { margin:0; opacity:.92; font-size:.95rem; }
-  .progress-wrap { max-width:860px; margin:-1.1rem auto 0; padding:0 1.2rem; }
+  .langbar { max-width:860px; margin:0 auto; padding:.7rem 1.2rem 0; display:flex; flex-wrap:wrap; gap:.4rem; justify-content:center; }
+  .langbar button { border:1px solid var(--line); background:var(--card); border-radius:99px; padding:.3rem .85rem; cursor:pointer; font-size:.82rem; }
+  .langbar button.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .progress-wrap { max-width:860px; margin:1rem auto 0; padding:0 1.2rem; }
   .progress-card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:1rem 1.2rem; box-shadow:0 4px 14px rgba(0,0,0,.05); }
   .bar { height:10px; background:#f0e7d8; border-radius:99px; overflow:hidden; margin-top:.5rem; }
   .bar > div { height:100%; background:linear-gradient(90deg,var(--accent),#d1a24a); width:0%; transition:width .4s; }
@@ -42,9 +45,10 @@
 </head>
 <body>
 <header>
-  <h1>🎁 免費試用追蹤站</h1>
-  <p>免費試用包・試用品申請清單 — 申請進度自己打勾，寄到就送朋友！</p>
+  <h1 id="h-title">🎁 免費試用追蹤站</h1>
+  <p id="h-sub"></p>
 </header>
+<div class="langbar" id="langbar"></div>
 
 <div class="progress-wrap">
   <div class="progress-card">
@@ -54,22 +58,22 @@
 </div>
 
 <main>
-  <div class="tip">💡 有些名額有限、活動說結束就結束，申請前先確認頁面還能下單。大部分試用條款只限制「轉售」，自己用或送朋友都沒問題。</div>
+  <div class="tip" id="tip"></div>
   <div class="tabs" id="tabs"></div>
   <div id="list"></div>
 
   <div class="add-form">
-    <strong>➕ 發現新的免費試用？加進來</strong>
-    <input id="f-name" placeholder="名稱（例：XX 品牌試用包）">
-    <input id="f-url" placeholder="連結（https://…）">
-    <input id="f-desc" placeholder="說明（例：填問卷領取，每月限量）">
-    <select id="f-cat"><option value="us">🇺🇸 美國區</option><option value="tw">🇹🇼 台灣區</option><option value="daily">📰 每日情報站</option></select>
-    <button onclick="addCustom()">加入清單</button>
+    <strong id="add-title"></strong>
+    <input id="f-name" placeholder="">
+    <input id="f-url" placeholder="">
+    <input id="f-desc" placeholder="">
+    <select id="f-cat"></select>
+    <button onclick="addCustom()" id="add-btn"></button>
   </div>
 </main>
 
 <footer>
-  最後更新：2026-09-29 ｜ 活動可能隨時結束，以各官網為準<br>
+  <span id="f-updated"></span> ｜ <span id="f-note"></span><br>
   Made with ♥ for Hebe's 免費賺錢計畫
 </footer>
 
@@ -77,89 +81,166 @@
 <div class="ad-slot"></div>
 
 <script>
-const DATA = [
- // ---------- 美國區 ----------
- {cat:"us", name:"SampleSource", url:"https://www.samplesource.com", desc:"季節性 sample box，一次十幾樣（美妝、清潔、食品），免運。開信通知一到就去搶，名額很快沒。", tags:["免運","季節限定"]},
- {cat:"us", name:"PINCHme", url:"https://offers.pinchme.com", desc:"每週二 Sample Tuesday 開搶，大品牌（Olay、Dyson 等）常出現，要寫簡單使用回饋。", tags:["每週二","要寫回饋"]},
- {cat:"us", name:"Social Nature", url:"https://www.socialnature.com", desc:"申請試用，入選後寄免費產品兌換券，去指定商店換有機/天然產品，要寫短評。", tags:["兌換券","要寫短評"]},
- {cat:"us", name:"Influenster（VoxBox）", url:"https://www.influenster.com", desc:"試用箱常是正裝！先填滿檔案、綁社群帳號、多互動，越活躍越容易被選中，要寫評測。", tags:["常是正裝","要寫評測"]},
- {cat:"us", name:"Smiley360 / Vocalpoint / BzzAgent", url:"https://smiley.socialmedialink.com", desc:"試用換分享型社群，適合喜歡在社群發心得的人。", tags:["要分享"]},
- {cat:"us", name:"J&J Friends & Neighbors", url:"https://jjfriendsandneighbors.com", desc:"嬌生美妝/個護產品測試，填問卷入會，有些測試還有酬勞。", tags:["問卷入會"]},
- {cat:"us", name:"Moms Meet / PTPA", url:"https://momsmeet.com", desc:"爸媽向：母嬰、健康食品試用，試用換心得。", tags:["母嬰"]},
- {cat:"us", name:"InStyle Trendsetters / Snuggle Bear Den", url:"https://www.instyletrendsetters.com", desc:"流行美妝問卷＋新品試用；Snuggle 是洗衣香氛品牌任務制。", tags:["問卷"]},
- {cat:"us", name:"Amazon Send Me a Sample", url:"https://www.amazon.com", desc:"對 Alexa 說 “send me a sample”，看到有 Send Me a Sample 標誌的品牌就能領。", tags:["Alexa"]},
- // ---------- 每日情報站 ----------
- {cat:"daily", name:"Hip2Save 免費情報", url:"https://hip2save.com/freebies/", desc:"每天更新，親測過才上架，最值得每天掃一遍。", tags:["每日更新"]},
- {cat:"daily", name:"The Freebie Guy", url:"https://thefreebieguy.com", desc:"免費情報聚合，新的試用活動即時貼出。", tags:["聚合站"]},
- {cat:"daily", name:"Freeflys", url:"https://www.freeflys.com", desc:"分類清楚的試用情報站（美妝/母嬰/食品/健康），免註冊瀏覽。", tags:["聚合站"]},
- {cat:"daily", name:"Yo! Free Samples / ILFT", url:"https://yo freesamples.com".replace(" ",""), desc:"每日更新的免費試用清單，無問卷牆。", tags:["聚合站"]},
- {cat:"daily", name:"The Penny Hoarder", url:"https://www.thepennyhoarder.com/save-money/free-samples-online/", desc:"整理過的合法試用網站清單，附注意事項。", tags:["整理文"]},
- // ---------- 台灣區 ----------
- {cat:"tw", name:"Dcard 美妝板情報串", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"「試用包免運寄到家」持續更新，幾十個品牌 0 元下單寄到家。點進去還能下單＝活動還在。", tags:["必看","0元免運"]},
- {cat:"tw", name:"理膚寶水蝦皮官方商城", url:"https://shopee.tw", desc:"蝦皮搜官方商城，結帳輸入折扣碼 38Gfree（先清空購物車含贈品券才有免運）。", tags:["折扣碼"]},
- {cat:"tw", name:"大春煉皂", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"每個月前 200 名免費，每月初去搶。詳見 Dcard 情報串連結。", tags:["每月限量"]},
- {cat:"tw", name:"唯白衛生棉", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"每月抽 100 名。詳見 Dcard 情報串連結。", tags:["每月抽獎"]},
- {cat:"tw", name:"彤芙園 / 希素", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"彤芙園填問卷領取；希素加 LINE 好友對話框填寫領護手霜。", tags:["問卷/LINE"]},
- {cat:"tw", name:"品牌試用包名單", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"綠藤生機、寶拉珍選、雅漾、Akimia 面膜、Pleine 面膜、護妍天使、三心潔顏、川息面膜、SYShop 等，完整名單見情報串。", tags:["名單"]},
- {cat:"tw", name:"媽媽會路線", url:"https://www.dcard.tw/f/makeup/p/256777509", desc:"幫寶適、好奇等品牌官網加入會員，免費領尿布試用裝＋現金券，媽媽社團需求大。", tags:["母嬰"]},
+const LANGS = [
+  {id:"zh", label:"繁體中文", html:"zh-Hant"},
+  {id:"en", label:"English", html:"en"},
+  {id:"de", label:"Deutsch", html:"de"},
+  {id:"fr", label:"Français", html:"fr"},
+  {id:"ja", label:"日本語", html:"ja"},
+  {id:"ko", label:"한국어", html:"ko"},
+  {id:"es", label:"Español", html:"es"},
+  {id:"hi", label:"हिन्दी", html:"hi"}
 ];
-const CATS = {us:"🇺🇸 美國區", tw:"🇹🇼 台灣區", daily:"📰 每日情報站"};
-let state = JSON.parse(localStorage.getItem("freebie-tracker-v1") || "{}");
+const S = {
+zh:{title:"🎁 免費試用追蹤站",sub:"免費試用包・試用品申請清單 — 申請進度自己打勾，寄到就送朋友！",tip:"💡 有些名額有限、活動說結束就結束，申請前先確認頁面還能下單。大部分試用條款只限制「轉售」，自己用或送朋友都沒問題。",twNote:"⚠️ 台灣區需要台灣收件地址，人在國外可請家人代收。",tab_us:"🇺🇸 美國區",tab_tw:"🇹🇼 台灣區",tab_daily:"📰 每日情報站",addTitle:"➕ 發現新的免費試用？加進來",ph_name:"名稱（例：XX 品牌試用包）",ph_url:"連結（https://…）",ph_desc:"說明（例：填問卷領取，每月限量）",add:"加入清單",del:"刪除",updated:"最後更新：2026-09-29",note:"活動可能隨時結束，以各官網為準",alert:"請填名稱",newTag:"新增",newDesc:"網友推薦的新發現",docTitle:"免費試用追蹌站",meta:"免費試用包、試用品申請追蹤清單：美國與台灣可申請來源整理，申請進度自己打勾追蹤。"},
+en:{title:"🎁 Freebie Tracker",sub:"Free samples & trial packs checklist — tick off your applications, share the goodies with friends!",tip:"💡 Some offers are limited and can end anytime — check the page is still accepting orders before applying. Most programs only restrict resale; personal use and gifting are fine.",twNote:"⚠️ The Taiwan section needs a Taiwan shipping address — ask family to receive it if you are abroad.",tab_us:"🇺🇸 US",tab_tw:"🇹🇼 Taiwan",tab_daily:"📰 Daily deals",addTitle:"➕ Found a new freebie? Add it",ph_name:"Name (e.g. brand X trial pack)",ph_url:"Link (https://…)",ph_desc:"Notes (e.g. fill a survey, monthly limited)",add:"Add to list",del:"Delete",updated:"Last updated: 2026-09-29",note:"Offers may end anytime; check each official site",alert:"Please enter a name",newTag:"New",newDesc:"New find shared by the community",docTitle:"Freebie Tracker",meta:"Free samples & trial packs checklist: claimable sources in the US and Taiwan. Tick off your application progress."},
+de:{title:"🎁 Gratisproben-Tracker",sub:"Checkliste für Gratisproben & Testpakete — hake deine Anmeldungen ab und teile die Produkte mit Freunden!",tip:"💡 Manche Angebote sind begrenzt und können jederzeit enden — prüfe vor der Anmeldung, ob die Seite noch Bestellungen annimmt. Meist ist nur der Weiterverkauf untersagt; Eigenbedarf und Verschenken sind ok.",twNote:"⚠️ Für den Taiwan-Bereich brauchst du eine taiwanische Lieferadresse — bitte ggf. die Familie um Weiterleitung.",tab_us:"🇺🇸 USA",tab_tw:"🇹🇼 Taiwan",tab_daily:"📰 Tägliche Deals",addTitle:"➕ Neues Gratisangebot gefunden? Hinzufügen",ph_name:"Name (z. B. Testpaket Marke XY)",ph_url:"Link (https://…)",ph_desc:"Beschreibung (z. B. Umfrage ausfüllen, monatlich begrenzt)",add:"Zur Liste hinzufügen",del:"Löschen",updated:"Zuletzt aktualisiert: 29.09.2026",note:"Angebote können jederzeit enden; siehe jeweils offizielle Seite",alert:"Bitte einen Namen eingeben",newTag:"Neu",newDesc:"Neuer Fund aus der Community",docTitle:"Gratisproben-Tracker",meta:"Checkliste für Gratisproben & Testpakete: verfügbare Quellen in den USA und Taiwan. Hake deinen Fortschritt ab."},
+fr:{title:"🎁 Traqueur d'échantillons gratuits",sub:"Liste des échantillons et kits d'essai gratuits — coche tes demandes et partage avec tes amis !",tip:"💡 Certaines offres sont limitées et peuvent se terminer à tout moment — vérifie que la page accepte encore les commandes. En général, seule la revente est interdite ; usage personnel et cadeaux sont autorisés.",twNote:"⚠️ La section Taïwan nécessite une adresse de livraison à Taïwan — demande à ta famille si tu es à l'étranger.",tab_us:"🇺🇸 États-Unis",tab_tw:"🇹🇼 Taïwan",tab_daily:"📰 Bons plans du jour",addTitle:"➕ Un nouveau bon plan ? Ajoute-le",ph_name:"Nom (ex. : kit d'essai marque X)",ph_url:"Lien (https://…)",ph_desc:"Description (ex. : remplir un sondage, limité chaque mois)",add:"Ajouter à la liste",del:"Supprimer",updated:"Dernière mise à jour : 29/09/2026",note:"Les offres peuvent se terminer à tout moment ; voir chaque site officiel",alert:"Veuillez saisir un nom",newTag:"Nouveau",newDesc:"Nouvelle trouvaille de la communauté",docTitle:"Traqueur d'échantillons gratuits",meta:"Liste des échantillons gratuits : sources aux États-Unis et à Taïwan. Coche ta progression."},
+ja:{title:"🎁 無料サンプル追跡サイト",sub:"無料サンプル・お試しパックのチェックリスト — 申請状況をチェックして、届いたら友達にシェア！",tip:"💡 数量限定のものもあり、予告なく終了することがあります。申請前に受付中か確認してください。転売のみ禁止の場合がほとんどで、自分用やプレゼントはOKです。",twNote:"⚠️ 台湾エリアは台湾の配送先住所が必要です。海外在住の方はご家族に受け取ってもらいましょう。",tab_us:"🇺🇸 アメリカ",tab_tw:"🇹🇼 台湾",tab_daily:"📰 毎日のお得情報",addTitle:"➕ 新しい無料サンプルを見つけた？追加しよう",ph_name:"名前（例：XXブランドのお試しパック）",ph_url:"リンク（https://…）",ph_desc:"説明（例：アンケートに回答、毎月数量限定）",add:"リストに追加",del:"削除",updated:"最終更新：2026-09-29",note:"キャンペーンは予告なく終了する場合があります。各公式サイトをご確認ください",alert:"名前を入力してください",newTag:"新規",newDesc:"コミュニティからの新着情報",docTitle:"無料サンプル追跡サイト",meta:"無料サンプル・お試しパックのチェックリスト：アメリカと台湾の申請先まとめ。進捗をチェック。"},
+ko:{title:"🎁 무료 샘플 추적기",sub:"무료 샘플·체험팩 체크리스트 — 신청 현황을 체크하고, 받으면 친구에게 나눠주세요!",tip:"💡 수량 한정인 경우가 있고 예고 없이 종료될 수 있습니다. 신청 전에 접수 중인지 확인하세요. 대부분 재판매만 금지되며, 개인 사용이나 선물은 괜찮습니다.",twNote:"⚠️ 대만 지역은 대만 배송지 주소가 필요합니다. 해외에 계시면 가족에게 대신 받아달라고 하세요.",tab_us:"🇺🇸 미국",tab_tw:"🇹🇼 대만",tab_daily:"📰 매일 특가 정보",addTitle:"➕ 새로운 무료 샘플을 찾았나요? 추가하세요",ph_name:"이름 (예: XX 브랜드 체험팩)",ph_url:"링크 (https://…)",ph_desc:"설명 (예: 설문 작성, 매월 한정 수량)",add:"목록에 추가",del:"삭제",updated:"마지막 업데이트: 2026-09-29",note:"캠페인은 예고 없이 종료될 수 있습니다. 각 공식 사이트를 확인하세요",alert:"이름을 입력하세요",newTag:"신규",newDesc:"커뮤니티의 새로운 발견",docTitle:"무료 샘플 추적기",meta:"무료 샘플·체험팩 체크리스트: 미국과 대만의 신청처 정리. 진행 상황을 체크하세요."},
+es:{title:"🎁 Rastreador de muestras gratis",sub:"Lista de muestras y packs de prueba gratis — marca tus solicitudes y comparte con amigos.",tip:"💡 Algunas ofertas son limitadas y pueden terminar en cualquier momento; verifica que la página siga aceptando pedidos. Por lo general solo se prohíbe la reventa; el uso personal y los regalos están bien.",twNote:"⚠️ La sección de Taiwán necesita una dirección de envío en Taiwán; pide a tu familia si estás en el extranjero.",tab_us:"🇺🇸 EE. UU.",tab_tw:"🇹🇼 Taiwán",tab_daily:"📰 Ofertas del día",addTitle:"➕ ¿Encontraste una muestra nueva? Añádela",ph_name:"Nombre (ej.: pack de prueba marca X)",ph_url:"Enlace (https://…)",ph_desc:"Descripción (ej.: completar encuesta, cantidad mensual limitada)",add:"Añadir a la lista",del:"Eliminar",updated:"Última actualización: 29/09/2026",note:"Las ofertas pueden terminar en cualquier momento; consulta cada sitio oficial",alert:"Introduce un nombre",newTag:"Nuevo",newDesc:"Nuevo hallazgo de la comunidad",docTitle:"Rastreador de muestras gratis",meta:"Lista de muestras gratis: fuentes en EE. UU. y Taiwán. Marca tu progreso."},
+hi:{title:"🎁 मुफ्त सैंपल ट्रैकर",sub:"मुफ्त सैंपल और ट्रायल पैक की चेकलिस्ट — अपने आवेदन टिक करें और दोस्तों के साथ बाँटें!",tip:"💡 कुछ ऑफर सीमित हैं और कभी भी समाप्त हो सकते हैं — आवेदन से पहले जाँच लें कि पेज अभी भी ऑर्डर ले रहा है। ज़्यादातर में सिर्फ पुनर्विक्रय मना है; निजी उपयोग और उपहार ठीक हैं।",twNote:"⚠️ ताइवान सेक्शन के लिए ताइवान का डिलीवरी पता चाहिए — विदेश में हैं तो परिवार से मँगवाएँ।",tab_us:"🇺🇸 अमेरिका",tab_tw:"🇹🇼 ताइवान",tab_daily:"📰 रोज़ के ऑफर",addTitle:"➕ कोई नया मुफ्त सैंपल मिला? जोड़ें",ph_name:"नाम (जैसे: XX ब्रांड ट्रायल पैक)",ph_url:"लिंक (https://…)",ph_desc:"विवरण (जैसे: सर्वे भरें, हर महीने सीमित)",add:"सूची में जोड़ें",del:"हटाएँ",updated:"अंतिम अपडेट: 29/09/2026",note:"ऑफर कभी भी समाप्त हो सकते हैं; प्रत्येक आधिकारिक साइट देखें",alert:"कृपया नाम दर्ज करें",newTag:"नया",newDesc:"समुदाय की नई खोज",docTitle:"मुफ्त सैंपल ट्रैकर",meta:"मुफ्त सैंपल चेकलिस्ट: अमेरिका और ताइवान के स्रोत। अपनी प्रगति टिक करें।"}
+};
+const TAGS = {
+ship:{zh:"免運",en:"free shipping",de:"Gratisversand",fr:"livraison gratuite",ja:"送料無料",ko:"무료배송",es:"envío gratis",hi:"मुफ्त शिपिंग"},
+seasonal:{zh:"季節限定",en:"seasonal",de:"saisonal",fr:"saisonnier",ja:"季節限定",ko:"시즌 한정",es:"de temporada",hi:"मौसमी"},
+tuesday:{zh:"每週二",en:"every Tuesday",de:"jeden Dienstag",fr:"chaque mardi",ja:"毎週火曜",ko:"매주 화요일",es:"cada martes",hi:"हर मंगलवार"},
+review:{zh:"要寫回饋",en:"review required",de:"Bewertung erforderlich",fr:"avis requis",ja:"レビュー必須",ko:"리뷰 필수",es:"reseña requerida",hi:"समीक्षा ज़रूरी",hl:1},
+coupon:{zh:"兌換券",en:"coupons",de:"Coupons",fr:"coupons",ja:"クーポン",ko:"쿠폰",es:"cupones",hi:"कूपन"},
+fullsize:{zh:"常是正裝",en:"often full-size",de:"oft Originalgröße",fr:"souvent format vente",ja:"現品サイズ多め",ko:"정품 사이즈 多",es:"a menudo tamaño real",hi:"अक्सर फुल-साइज़"},
+share:{zh:"要分享",en:"share required",de:"Teilen erforderlich",fr:"partage requis",ja:"シェア必須",ko:"공유 필수",es:"compartir requerido",hi:"शेयर ज़रूरी",hl:1},
+survey:{zh:"問卷",en:"survey",de:"Umfrage",fr:"sondage",ja:"アンケート",ko:"설문",es:"encuesta",hi:"सर्वे"},
+baby:{zh:"母嬰",en:"baby & kids",de:"Baby & Kind",fr:"bébé & enfant",ja:"ベビー",ko:"육아",es:"bebés",hi:"बेबी"},
+alexa:{zh:"Alexa",en:"Alexa",de:"Alexa",fr:"Alexa",ja:"Alexa",ko:"Alexa",es:"Alexa",hi:"Alexa"},
+daily:{zh:"每日更新",en:"updated daily",de:"täglich aktualisiert",fr:"mis à jour quotidiennement",ja:"毎日更新",ko:"매일 업데이트",es:"actualizado a diario",hi:"रोज़ अपडेट"},
+aggregator:{zh:"情報聚合",en:"aggregator",de:"Aggregator",fr:"agrégateur",ja:"アグリゲーター",ko:"애그리게이터",es:"agregador",hi:"एग्रीगेटर"},
+curated:{zh:"精選整理",en:"curated",de:"kuratiert",fr:"sélectionné",ja:"厳選",ko:"엄선",es:"seleccionado",hi:"चुनिंदा"},
+mustsee:{zh:"必看",en:"must-see",de:"ein Muss",fr:"incontournable",ja:"必見",ko:"필수",es:"imprescindible",hi:"ज़रूर देखें"},
+zerofree:{zh:"0元免運",en:"$0 + free shipping",de:"0 € + Gratisversand",fr:"0 € + livraison gratuite",ja:"0円・送料無料",ko:"0원 무료배송",es:"0 € + envío gratis",hi:"$0 + मुफ्त शिपिंग"},
+code:{zh:"折扣碼",en:"discount code",de:"Rabattcode",fr:"code promo",ja:"クーポンコード",ko:"할인 코드",es:"código de descuento",hi:"छूट कोड"},
+monthly:{zh:"每月限量",en:"monthly limited",de:"monatlich begrenzt",fr:"limité chaque mois",ja:"毎月数量限定",ko:"매월 한정",es:"limitado cada mes",hi:"हर महीने सीमित"},
+draw:{zh:"每月抽獎",en:"monthly draw",de:"monatliche Verlosung",fr:"tirage mensuel",ja:"毎月抽選",ko:"매월 추첨",es:"sorteo mensual",hi:"मासिक ड्रॉ"},
+line:{zh:"LINE/問卷",en:"LINE/survey",de:"LINE/Umfrage",fr:"LINE/sondage",ja:"LINE/アンケート",ko:"LINE/설문",es:"LINE/encuesta",hi:"LINE/सर्वे"},
+list:{zh:"名單",en:"list",de:"Liste",fr:"liste",ja:"リスト",ko:"목록",es:"lista",hi:"सूची"},
+new:{zh:"新增",en:"new",de:"neu",fr:"nouveau",ja:"新規",ko:"신규",es:"nuevo",hi:"नया"}
+};
+const ITEMS = [
+{cat:"us",url:"https://www.samplesource.com",tags:["ship","seasonal"],name:{zh:"SampleSource",en:"SampleSource",de:"SampleSource",fr:"SampleSource",ja:"SampleSource",ko:"SampleSource",es:"SampleSource",hi:"SampleSource"},desc:{zh:"季節性 sample box，一次十幾樣（美妝、清潔、食品），免運。收到通知信就快去搶，名額很快沒。",en:"Seasonal sample box (10+ items: beauty, household, food). Free shipping — claim fast when the email arrives.",de:"Saisonale Probierbox (10+ Produkte: Beauty, Haushalt, Lebensmittel). Gratisversand — schnell sein, wenn die E-Mail kommt.",fr:"Coffret d'échantillons saisonnier (10+ articles : beauté, maison, alimentation). Livraison gratuite — vite quand l'e-mail arrive.",ja:"季節ごとのサンプルボックス（10点以上：コスメ・日用品・食品）。送料無料。案内メールが来たら早めに申請。",ko:"시즌별 샘플 박스(10종 이상: 뷰티·생활용품·식품). 무료 배송. 안내 메일이 오면 빨리 신청하세요.",es:"Caja de muestras de temporada (más de 10 artículos: belleza, hogar, alimentos). Envío gratis; solicita rápido al llegar el correo.",hi:"मौसमी सैंपल बॉक्स (10+ आइटम: ब्यूटी, घरेलू, खाद्य)। मुफ्त शिपिंग — ईमेल आते ही जल्दी दावा करें।"}},
+{cat:"us",url:"https://offers.pinchme.com",tags:["tuesday","review"],name:{zh:"PINCHme",en:"PINCHme",de:"PINCHme",fr:"PINCHme",ja:"PINCHme",ko:"PINCHme",es:"PINCHme",hi:"PINCHme"},desc:{zh:"每週二 Sample Tuesday 開搶，大品牌（Olay、Dyson 等）常出現，要寫簡單使用回饋。",en:"Free samples every Sample Tuesday (big brands like Olay, Dyson). Short feedback required.",de:"Jeden Dienstag (Sample Tuesday) Gratisproben großer Marken (z. B. Olay, Dyson). Kurzes Feedback erforderlich.",fr:"Échantillons gratuits chaque mardi (Sample Tuesday), grandes marques (Olay, Dyson…). Petit retour d'expérience requis.",ja:"毎週火曜の Sample Tuesday で無料サンプル（Olay、Dyson など大手ブランド多数）。簡単な感想の記入が必要。",ko:"매주 화요일 Sample Tuesday에 무료 샘플(올레이, 다이슨 등 유명 브랜드). 간단한 후기 작성 필요.",es:"Muestras gratis cada martes (Sample Tuesday), grandes marcas (Olay, Dyson…). Se pide una breve reseña.",hi:"हर मंगलवार (Sample Tuesday) मुफ्त सैंपल (Olay, Dyson जैसे बड़े ब्रांड)। छोटा फीडबैक ज़रूरी।"}},
+{cat:"us",url:"https://www.socialnature.com",tags:["coupon","review"],name:{zh:"Social Nature",en:"Social Nature",de:"Social Nature",fr:"Social Nature",ja:"Social Nature",ko:"Social Nature",es:"Social Nature",hi:"Social Nature"},desc:{zh:"申請試用，入選後寄免費產品兌換券，去指定商店換天然/有機產品，要寫短評。",en:"Apply to try; get free product coupons for natural/organic products redeemable in stores. Short review required.",de:"Zum Testen bewerben; bei Auswahl gibt es Gratis-Coupons für Natur-/Bioprodukte zum Einlösen im Laden. Kurze Bewertung erforderlich.",fr:"Candidatez pour tester ; coupons produits gratuits pour des produits naturels/bio à retirer en magasin. Petit avis requis.",ja:"応募して当選すると、ナチュラル・オーガニック製品と交換できる無料クーポンが届きます（店頭で交換）。短いレビューが必要。",ko:"신청 후 선정되면 천연/유기농 제품을 매장에서 교환할 수 있는 무료 쿠폰 발송. 짧은 리뷰 필요.",es:"Solicita probar; si te eligen, recibes cupones gratis para productos naturales/orgánicos canjeables en tiendas. Reseña breve requerida.",hi:"ट्राई करने के लिए आवेदन करें; चयन पर प्राकृतिक/ऑर्गेनिक उत्पादों के लिए मुफ्त कूपन, स्टोर में रिडीम करें। छोटी समीक्षा ज़रूरी।"}},
+{cat:"us",url:"https://www.influenster.com",tags:["fullsize","review"],name:{zh:"Influenster（VoxBox）",en:"Influenster (VoxBox)",de:"Influenster (VoxBox)",fr:"Influenster (VoxBox)",ja:"Influenster（VoxBox）",ko:"Influenster(VoxBox)",es:"Influenster (VoxBox)",hi:"Influenster (VoxBox)"},desc:{zh:"試用箱常是正裝！先填滿檔案、綁定社群帳號、多互動，越活躍越容易被選中，要寫評測。",en:"Boxes often contain full-size products! Complete your profile, connect socials, stay active. Reviews required.",de:"Boxen enthalten oft Originalgrößen! Profil vervollständigen, Social-Media verknüpfen, aktiv bleiben. Bewertungen erforderlich.",fr:"Les coffrets contiennent souvent des formats vente ! Complétez le profil, connectez vos réseaux, restez actif. Avis requis.",ja:"現品サイズが入ることも多い！プロフィールを充実させ、SNSを連携して積極的に活動すると選ばれやすくなります。レビューが必要。",ko:"정품 사이즈가 들어 있는 경우가 많아요! 프로필을 완성하고 SNS를 연동해 활발히 활동하세요. 리뷰 필수.",es:"¡Las cajas suelen traer tamaño real! Completa tu perfil, conecta tus redes y mantente activo. Reseñas requeridas.",hi:"बॉक्स में अक्सर फुल-साइज़ उत्पाद होते हैं! प्रोफ़ाइल पूरी करें, सोशल जोड़ें, सक्रिय रहें। समीक्षा ज़रूरी।"}},
+{cat:"us",url:"https://smiley.socialmedialink.com",tags:["share"],name:{zh:"Smiley360 / Vocalpoint",en:"Smiley360 / Vocalpoint",de:"Smiley360 / Vocalpoint",fr:"Smiley360 / Vocalpoint",ja:"Smiley360 / Vocalpoint",ko:"Smiley360 / Vocalpoint",es:"Smiley360 / Vocalpoint",hi:"Smiley360 / Vocalpoint"},desc:{zh:"試用換分享型社群，適合喜歡在社群媒體發心得的人。",en:"Try-and-share communities for people who like posting reviews on social media.",de:"Test-und-Teilen-Communitys für alle, die gern Rezensionen in sozialen Medien posten.",fr:"Communautés « tester et partager » pour celles et ceux qui aiment publier des avis sur les réseaux.",ja:"SNSでの発信が好きな人向けの「試してシェアする」コミュニティ。",ko:"SNS에 후기를 올리는 것을 좋아하는 분들을 위한 체험·공유 커뮤니티.",es:"Comunidades de probar y compartir, ideales si te gusta publicar reseñas en redes sociales.",hi:"सोशल मीडिया पर रिव्यू पोस्ट करना पसंद करने वालों के लिए ट्राई-एंड-शेयर समुदाय।"}},
+{cat:"us",url:"https://jjfriendsandneighbors.com",tags:["survey"],name:{zh:"J&J Friends & Neighbors",en:"J&J Friends & Neighbors",de:"J&J Friends & Neighbors",fr:"J&J Friends & Neighbors",ja:"J&J Friends & Neighbors",ko:"J&J Friends & Neighbors",es:"J&J Friends & Neighbors",hi:"J&J Friends & Neighbors"},desc:{zh:"嬌生美妝/個護產品測試，填問卷加入會員，有些測試還有酬勞。",en:"J&J beauty/personal-care product testing. Join via survey; some studies pay.",de:"Produkttests von J&J (Beauty/Körperpflege). Beitritt per Umfrage; manche Studien werden vergütet.",fr:"Tests de produits beauté/soins J&J. Inscription via sondage ; certaines études sont rémunérées.",ja:"J&Jの美容・パーソナルケア製品テスト。アンケートで会員登録。一部は謝礼あり。",ko:"J&J 뷰티/퍼스널케어 제품 테스트. 설문으로 가입, 일부 테스트는 보상 지급.",es:"Pruebas de productos de belleza/cuidado personal de J&J. Registro por encuesta; algunos estudios pagan.",hi:"J&J ब्यूटी/पर्सनल-केयर उत्पाद परीक्षण। सर्वे से जुड़ें; कुछ अध्ययनों में भुगतान।"}},
+{cat:"us",url:"https://momsmeet.com",tags:["baby"],name:{zh:"Moms Meet / PTPA",en:"Moms Meet / PTPA",de:"Moms Meet / PTPA",fr:"Moms Meet / PTPA",ja:"Moms Meet / PTPA",ko:"Moms Meet / PTPA",es:"Moms Meet / PTPA",hi:"Moms Meet / PTPA"},desc:{zh:"爸媽向：母嬰、健康食品試用，試用換真實心得。",en:"For parents: baby and better-for-you food sampling in exchange for honest feedback.",de:"Für Eltern: Baby- und gesunde Lebensmitteltests im Austausch für ehrliches Feedback.",fr:"Pour les parents : tests bébé et alimentation saine contre un avis honnête.",ja:"子育て世代向け：ベビー・健康食品のお試しと引き換えに正直な感想を。",ko:"부모님 대상: 육아·건강식품 체험 후 솔직한 후기 제공.",es:"Para padres: pruebas de productos para bebés y alimentación saludable a cambio de opiniones honestas.",hi:"माता-पिता के लिए: बेबी और हेल्दी-फूड सैंपलिंग, ईमानदार फीडबैक के बदले।"}},
+{cat:"us",url:"https://www.instyletrendsetters.com",tags:["survey"],name:{zh:"InStyle Trendsetters / Snuggle Bear Den",en:"InStyle Trendsetters / Snuggle Bear Den",de:"InStyle Trendsetters / Snuggle Bear Den",fr:"InStyle Trendsetters / Snuggle Bear Den",ja:"InStyle Trendsetters / Snuggle Bear Den",ko:"InStyle Trendsetters / Snuggle Bear Den",es:"InStyle Trendsetters / Snuggle Bear Den",hi:"InStyle Trendsetters / Snuggle Bear Den"},desc:{zh:"流行美妝問卷＋新品試用；Snuggle 是洗衣香氛品牌的任務制試用。",en:"Fashion/beauty surveys + new product trials; Snuggle runs mission-based testing.",de:"Mode-/Beauty-Umfragen + neue Produkttests; Snuggle mit missionsbasierten Tests.",fr:"Sondages mode/beauté + tests de nouveautés ; Snuggle propose des tests par missions.",ja:"ファッション・美容アンケート＋新製品トライアル。Snuggleはミッション制テスト。",ko:"패션/뷰티 설문 + 신제품 체험. Snuggle은 미션 기반 테스트 운영.",es:"Encuestas de moda/belleza + pruebas de novedades; Snuggle con pruebas por misiones.",hi:"फैशन/ब्यूटी सर्वे + नए उत्पाद परीक्षण; Snuggle मिशन-आधारित टेस्टिंग।"}},
+{cat:"us",url:"https://www.amazon.com",tags:["alexa"],name:{zh:"Amazon Send Me a Sample",en:"Amazon Send Me a Sample",de:"Amazon Send Me a Sample",fr:"Amazon Send Me a Sample",ja:"Amazon Send Me a Sample",ko:"Amazon Send Me a Sample",es:"Amazon Send Me a Sample",hi:"Amazon Send Me a Sample"},desc:{zh:"對 Alexa 說「send me a sample」，看到有 Send Me a Sample 標誌的品牌就能領。",en:"Say “send me a sample” to Alexa; claim from participating brands.",de:"Sage zu Alexa „send me a sample“ und erhalte Proben teilnehmender Marken.",fr:"Dites « send me a sample » à Alexa ; recevez des échantillons des marques participantes.",ja:"Alexaに「send me a sample」と話しかけると、参加ブランドのサンプルがもらえます。",ko:"Alexa에게 “send me a sample”이라고 말하면 참여 브랜드의 샘플을 받을 수 있습니다.",es:"Dile a Alexa «send me a sample» y recibe muestras de las marcas participantes.",hi:"Alexa से कहें “send me a sample”; भाग लेने वाले ब्रांडों से सैंपल पाएँ।"}},
+{cat:"daily",url:"https://hip2save.com/freebies/",tags:["daily"],name:{zh:"Hip2Save 免費情報",en:"Hip2Save freebies",de:"Hip2Save-Gratisangebote",fr:"Bons plans Hip2Save",ja:"Hip2Save 無料情報",ko:"Hip2Save 무료 정보",es:"Ofertas gratis Hip2Save",hi:"Hip2Save फ्रीबीज़"},desc:{zh:"每天更新，每則免費情報都親測過才上架，最值得每天掃一遍。",en:"Updated daily; every freebie is personally tested before posting.",de:"Täglich aktualisiert; jedes Gratisangebot wird vorher persönlich getestet.",fr:"Mis à jour quotidiennement ; chaque bon plan est testé avant publication.",ja:"毎日更新。掲載前にすべて実際に試して確認しています。",ko:"매일 업데이트. 게시 전 모든 무료 정보를 직접 테스트합니다.",es:"Actualizado a diario; cada oferta se prueba personalmente antes de publicarse.",hi:"रोज़ अपडेट; हर फ्रीबी पोस्ट करने से पहले खुद टेस्ट किया जाता है।"}},
+{cat:"daily",url:"https://thefreebieguy.com",tags:["aggregator"],name:{zh:"The Freebie Guy",en:"The Freebie Guy",de:"The Freebie Guy",fr:"The Freebie Guy",ja:"The Freebie Guy",ko:"The Freebie Guy",es:"The Freebie Guy",hi:"The Freebie Guy"},desc:{zh:"免費情報聚合站，新的試用活動即時貼出。",en:"Freebie aggregator; new sample offers posted in real time.",de:"Gratis-Aggregator; neue Probenangebote in Echtzeit.",fr:"Agrégateur de bons plans ; nouvelles offres publiées en temps réel.",ja:"無料情報のアグリゲーター。新着サンプル情報をリアルタイムで掲載。",ko:"무료 정보 애그리게이터. 새로운 샘플 소식을 실시간으로 게시.",es:"Agregador de ofertas gratis; nuevas muestras publicadas en tiempo real.",hi:"फ्रीबी एग्रीगेटर; नए सैंपल ऑफर रीयल-टाइम में पोस्ट।"}},
+{cat:"daily",url:"https://www.freeflys.com",tags:["aggregator"],name:{zh:"Freeflys",en:"Freeflys",de:"Freeflys",fr:"Freeflys",ja:"Freeflys",ko:"Freeflys",es:"Freeflys",hi:"Freeflys"},desc:{zh:"分類清楚的試用情報站（美妝/母嬰/食品/健康），免註冊就能瀏覽。",en:"Well-categorized sample directory (beauty/baby/food/health); browse without signup.",de:"Gut sortiertes Probenverzeichnis (Beauty/Baby/Lebensmittel/Gesundheit), ohne Anmeldung stöbern.",fr:"Répertoire bien classé (beauté/bébé/alimentation/santé), consultation sans inscription.",ja:"カテゴリ分けが分かりやすいサンプル情報サイト（コスメ・ベビー・食品・健康）。登録なしで閲覧可。",ko:"카테고리가 잘 정리된 샘플 정보 사이트(뷰티/육아/식품/건강). 가입 없이 열람 가능.",es:"Directorio bien clasificado (belleza/bebés/alimentos/salud); explora sin registrarte.",hi:"अच्छी तरह वर्गीकृत सैंपल डायरेक्टरी (ब्यूटी/बेबी/फूड/हेल्थ); बिना साइनअप देखें।"}},
+{cat:"daily",url:"https://www.thepennyhoarder.com/save-money/free-samples-online/",tags:["curated"],name:{zh:"The Penny Hoarder",en:"The Penny Hoarder",de:"The Penny Hoarder",fr:"The Penny Hoarder",ja:"The Penny Hoarder",ko:"The Penny Hoarder",es:"The Penny Hoarder",hi:"The Penny Hoarder"},desc:{zh:"整理過的合法試用網站清單，附安全注意事項。",en:"Curated list of legit free-sample sites with safety tips.",de:"Kuratierte Liste seriöser Gratisproben-Seiten mit Sicherheitstipps.",fr:"Liste sélectionnée de sites d'échantillons gratuits fiables, avec conseils de sécurité.",ja:"信頼できる無料サンプルサイトの厳選リスト。安全上の注意付き。",ko:"검증된 무료 샘플 사이트 엄선 목록. 안전 수칙 포함.",es:"Lista seleccionada de sitios legítimos de muestras gratis, con consejos de seguridad.",hi:"भरोसेमंद मुफ्त-सैंपल साइटों की चुनिंदा सूची, सुरक्षा टिप्स सहित।"}},
+{cat:"tw",url:"https://www.dcard.tw/f/makeup/p/256777509",tags:["mustsee","zerofree"],name:{zh:"Dcard 美妝板情報串",en:"Dcard makeup board thread",de:"Dcard-Makeup-Thread",fr:"Fil beauté Dcard",ja:"Dcardメイク板スレ",ko:"Dcard 메이크업 스레드",es:"Hilo de belleza de Dcard",hi:"Dcard मेकअप थ्रेड"},desc:{zh:"持續更新：幾十個品牌、0 元下單免運寄到家。點進去還能下單＝活動還在。",en:"Continuously updated: dozens of brands, $0 checkout with free home delivery. If you can still order, the offer is live.",de:"Laufend aktualisiert: Dutzende Marken, 0-€-Bestellung mit Gratisversand nach Hause. Bestellbar = Angebot aktiv.",fr:"Mis à jour en continu : des dizaines de marques, commande à 0 € avec livraison gratuite. Si on peut commander, l'offre est active.",ja:"随時更新：数十ブランド、0円決済・送料無料で自宅配送。注文できればキャンペーン実施中。",ko:"지속 업데이트: 수십 개 브랜드, 0원 결제·무료배송. 주문 가능 = 캠페인 진행 중.",es:"Actualización continua: docenas de marcas, pedido a 0 € con envío gratis a casa. Si se puede pedir, la oferta sigue activa.",hi:"लगातार अपडेट: दर्जनों ब्रांड, $0 चेकआउट पर मुफ्त होम डिलीवरी। ऑर्डर हो रहा है = ऑफर चालू।"}},
+{cat:"tw",url:"https://shopee.tw",tags:["code"],name:{zh:"理膚寶水蝦皮官方商城",en:"La Roche-Posay Shopee official store",de:"La Roche-Posay Shopee-Store",fr:"Boutique officielle Shopee La Roche-Posay",ja:"ラロッシュポゼ Shopee公式ストア",ko:"라로슈포제 Shopee 공식 스토어",es:"Tienda oficial de La Roche-Posay en Shopee",hi:"La Roche-Posay Shopee आधिकारिक स्टोर"},desc:{zh:"蝦皮官方商城，結帳輸入折扣碼 38Gfree（先清空購物車含贈品券才有免運）。",en:"Official Shopee store; use code 38Gfree at checkout (clear cart incl. gift coupons for free shipping).",de:"Offizieller Shopee-Store; Code 38Gfree an der Kasse nutzen (Warenkorb inkl. Geschenk-Coupons leeren für Gratisversand).",fr:"Boutique officielle Shopee ; code 38Gfree à la caisse (vider le panier, coupons cadeaux inclus, pour la livraison gratuite).",ja:"Shopee公式ストア。決済時にクーポンコード「38Gfree」を入力（無料配送にはカート内・ギフトクーポン含め空に）。",ko:"Shopee 공식 스토어. 결제 시 코드 38Gfree 입력(무료배송을 위해 장바구니·기프트 쿠폰 포함 비우기).",es:"Tienda oficial en Shopee; usa el código 38Gfree al pagar (vacía el carrito, incluidos cupones de regalo, para envío gratis).",hi:"आधिकारिक Shopee स्टोर; चेकआउट पर कोड 38Gfree डालें (मुफ्त शिपिंग हेतु कार्ट व गिफ्ट कूपन साफ़ करें)।"}},
+{cat:"tw",url:"https://www.dcard.tw/f/makeup/p/256777509",tags:["monthly"],name:{zh:"大春煉皂",en:"大春煉皂 (Dachun Soap)",de:"大春煉皂 (Dachun-Seife)",fr:"大春煉皂 (savon Dachun)",ja:"大春煉皂",ko:"大春煉皂",es:"大春煉皂 (jabón Dachun)",hi:"大春煉皂"},desc:{zh:"每個月前 200 名免費，每月初去搶。連結見 Dcard 情報串。",en:"Free for the first 200 each month — grab early monthly. Link in the Dcard thread.",de:"Jeden Monat gratis für die ersten 200 — monatlich früh sichern. Link im Dcard-Thread.",fr:"Gratuit pour les 200 premiers chaque mois — vite chaque début de mois. Lien dans le fil Dcard.",ja:"毎月先着200名無料。月初に早めにゲット。リンクはDcardスレ参照。",ko:"매월 선착순 200명 무료. 매월 초에 서둘러 신청. 링크는 Dcard 스레드 참조.",es:"Gratis para los 200 primeros cada mes; consíguelo a inicios de mes. Enlace en el hilo de Dcard.",hi:"हर महीने पहले 200 के लिए मुफ्त — हर महीने शुरुआत में लें। लिंक Dcard थ्रेड में।"}},
+{cat:"tw",url:"https://www.dcard.tw/f/makeup/p/256777509",tags:["draw"],name:{zh:"唯白衛生棉",en:"唯白 sanitary pads",de:"唯白-Binden",fr:"Serviettes 唯白",ja:"唯白ナプキン",ko:"唯白 생리대",es:"Compresas 唯白",hi:"唯白 सैनिटरी पैड"},desc:{zh:"每月抽 100 名。連結見 Dcard 情報串。",en:"100 winners drawn monthly. Link in the Dcard thread.",de:"Monatlich 100 Gewinner. Link im Dcard-Thread.",fr:"100 gagnants tirés au sort chaque mois. Lien dans le fil Dcard.",ja:"毎月100名に抽選。リンクはDcardスレ参照。",ko:"매월 100명 추첨. 링크는 Dcard 스레드 참조.",es:"100 ganadores sorteados cada mes. Enlace en el hilo de Dcard.",hi:"हर महीने 100 विजेता। लिंक Dcard थ्रेड में।"}},
+{cat:"tw",url:"https://www.dcard.tw/f/makeup/p/256777509",tags:["line"],name:{zh:"彤芙園 / 希素",en:"彤芙園 / 希素",de:"彤芙園 / 希素",fr:"彤芙園 / 希素",ja:"彤芙園 / 希素",ko:"彤芙園 / 希素",es:"彤芙園 / 希素",hi:"彤芙園 / 希素"},desc:{zh:"彤芙園填問卷領取；希素加 LINE 好友、填對話框表單領護手霜。",en:"彤芙園: fill a survey; 希素: add LINE friend and fill the chat form for hand cream.",de:"彤芙園: Umfrage ausfüllen; 希素: LINE-Freund hinzufügen und Chat-Formular für Handcreme ausfüllen.",fr:"彤芙園 : remplir un sondage ; 希素 : ajouter l'ami LINE et remplir le formulaire du chat pour la crème mains.",ja:"彤芙園はアンケートに回答、希素はLINEで友だち追加後フォーム入力でハンドクリーム。",ko:"彤芙園은 설문 작성, 希素는 LINE 친구 추가 후 채팅 폼 작성 시 핸드크림 증정.",es:"彤芙園: completa una encuesta; 希素: añade el amigo de LINE y completa el formulario del chat para la crema de manos.",hi:"彤芙園: सर्वे भरें; 希素: LINE फ्रेंड जोड़ें और चैट फ़ॉर्म भरकर हैंड क्रीम पाएँ।"}},
+{cat:"tw",url:"https://www.dcard.tw/f/makeup/p/256777509",tags:["list"],name:{zh:"品牌試用包名單",en:"Brand sample list",de:"Marken-Probenliste",fr:"Liste d'échantillons par marque",ja:"ブランド別サンプルリスト",ko:"브랜드별 샘플 목록",es:"Lista de muestras por marca",hi:"ब्रांड सैंपल सूची"},desc:{zh:"綠藤生機、寶拉珍選、雅漾、Akimia 面膜、Pleine 面膜等，完整名單見情報串。",en:"Greenvines, Paula's Choice, Avène, Akimia masks, Pleine masks and more — full list in the thread.",de:"Greenvines, Paula's Choice, Avène, Akimia-Masken, Pleine-Masken u. v. m. — vollständige Liste im Thread.",fr:"Greenvines, Paula's Choice, Avène, masques Akimia, masques Pleine, etc. — liste complète dans le fil.",ja:"緑藤生機、ポーラーズチョイス、アベンヌ、Akimiaマスク、Pleineマスクなど。完全リストはスレ参照。",ko:"Greenvines, Paula's Choice, Avène, Akimia 마스크, Pleine 마스크 등. 전체 목록은 스레드 참조.",es:"Greenvines, Paula's Choice, Avène, mascarillas Akimia, mascarillas Pleine y más; lista completa en el hilo.",hi:"Greenvines, Paula's Choice, Avène, Akimia मास्क, Pleine मास्क आदि — पूरी सूची थ्रेड में।"}},
+{cat:"tw",url:"https://www.dcard.tw/f/makeup/p/256777509",tags:["baby"],name:{zh:"媽媽會路線",en:"Mom club route",de:"Mama-Club-Route",fr:"Via les clubs de mamans",ja:"ママ会ルート",ko:"맘클럽 루트",es:"Ruta de clubs de mamás",hi:"मॉम क्लब रूट"},desc:{zh:"幫寶適、好奇等品牌官網加入會員，免費領尿布試用裝＋現金券，媽媽社團需求很大。",en:"Join diaper brand memberships (Pampers etc.) for free diaper samples + coupons; high demand in mom groups.",de:"Bei Windelmarken (Pampers usw.) anmelden: Gratis-Windelproben + Coupons; in Mamagruppen sehr gefragt.",fr:"Inscrivez-vous aux programmes des marques de couches (Pampers…) : échantillons + coupons gratuits ; très demandés dans les groupes de mamans.",ja:"パンパース等のブランド会員に登録で、おむつサンプル＋クーポンが無料。ママコミュニティで需要大。",ko:"팸퍼스 등 기저귀 브랜드 회원 가입 시 무료 기저귀 샘플+쿠폰. 맘 커뮤니티에서 수요가 많아요.",es:"Únete a los programas de marcas de pañales (Pampers…): muestras + cupones gratis; muy buscados en grupos de mamás.",hi:"डायपर ब्रांड (Pampers आदि) की सदस्यता लें: मुफ्त डायपर सैंपल + कूपन; मॉम ग्रुप्स में भारी माँग।"}}
+];
+let lang = localStorage.getItem("freebie-lang") || detectLang();
 let activeCat = "us";
+let state = JSON.parse(localStorage.getItem("freebie-tracker-v1") || "{}");
 let custom = JSON.parse(localStorage.getItem("freebie-custom-v1") || "[]");
-
-function save(){ localStorage.setItem("freebie-tracker-v1", JSON.stringify(state)); localStorage.setItem("freebie-custom-v1", JSON.stringify(custom)); }
-function key(it, i){ return (it.url||"") + "|" + it.name + "|" + i; }
-function all(){ return DATA.concat(custom); }
-function renderTabs(){
-  const t = document.getElementById("tabs"); t.innerHTML = "";
-  Object.keys(CATS).forEach(c=>{
+function detectLang(){
+  const n = (navigator.language||"en").toLowerCase();
+  if(n.startsWith("zh")) return "zh";
+  for(const L of LANGS){ if(n.startsWith(L.id)) return L.id; }
+  return "en";
+}
+function t(k){ return S[lang][k] || S.en[k]; }
+function save(){ localStorage.setItem("freebie-lang",lang); localStorage.setItem("freebie-tracker-v1",JSON.stringify(state)); localStorage.setItem("freebie-custom-v1",JSON.stringify(custom)); }
+function key(it,i){ return (it.url||"")+"|"+it.name.en+"|"+i; }
+function all(){ return ITEMS.concat(custom); }
+function applyLang(){
+  const L = LANGS.find(x=>x.id===lang);
+  document.documentElement.lang = L.html;
+  document.title = t("docTitle");
+  document.querySelector('meta[name="description"]').setAttribute("content", t("meta"));
+  document.getElementById("h-title").textContent = t("title");
+  document.getElementById("h-sub").textContent = t("sub");
+  document.getElementById("tip").textContent = t("tip");
+  document.getElementById("add-title").textContent = t("addTitle");
+  document.getElementById("f-name").placeholder = t("ph_name");
+  document.getElementById("f-url").placeholder = t("ph_url");
+  document.getElementById("f-desc").placeholder = t("ph_desc");
+  document.getElementById("add-btn").textContent = t("add");
+  document.getElementById("f-updated").textContent = t("updated");
+  document.getElementById("f-note").textContent = t("note");
+  const fc = document.getElementById("f-cat");
+  fc.innerHTML = '<option value="us">'+t("tab_us")+'</option><option value="tw">'+t("tab_tw")+'</option><option value="daily">'+t("tab_daily")+'</option>';
+  const lb = document.getElementById("langbar"); lb.innerHTML = "";
+  LANGS.forEach(L2=>{
     const b = document.createElement("button");
-    b.textContent = CATS[c]; b.className = c===activeCat ? "active" : "";
+    b.textContent = L2.label; b.className = L2.id===lang ? "active" : "";
+    b.onclick = ()=>{ lang=L2.id; save(); applyLang(); renderTabs(); renderList(); renderProgress(); };
+    lb.appendChild(b);
+  });
+}
+function renderTabs(){
+  const tb = document.getElementById("tabs"); tb.innerHTML = "";
+  [["us","tab_us"],["tw","tab_tw"],["daily","tab_daily"]].forEach(([c,k])=>{
+    const b = document.createElement("button");
+    b.textContent = t(k); b.className = c===activeCat ? "active" : "";
     b.onclick = ()=>{ activeCat=c; renderTabs(); renderList(); };
-    t.appendChild(b);
+    tb.appendChild(b);
   });
 }
 function renderList(){
   const box = document.getElementById("list"); box.innerHTML = "";
+  if(activeCat==="tw"){
+    const note=document.createElement("div"); note.className="tip"; note.textContent=t("twNote");
+    box.appendChild(note);
+  }
   all().forEach((it,i)=>{
     if(it.cat!==activeCat) return;
     const k = key(it,i), done = !!state[k];
+    const nm = it.name[lang] || it.name.en, ds = it.desc[lang] || it.desc.en;
     const d = document.createElement("div");
     d.className = "card" + (done?" done":"");
-    d.innerHTML =
-      '<input type="checkbox" class="check" '+(done?"checked":"")+' aria-label="已申請">' +
-      '<div><div class="name"><a href="'+it.url+'" target="_blank" rel="noopener">'+it.name+'</a></div>' +
-      '<div style="margin:.25rem 0">'+(it.tags||[]).map(t=>'<span class="tag'+(t.includes("回饋")||t.includes("評")||t.includes("分享")?" review":"")+'">'+t+'</span>').join("")+'</div>' +
-      '<p class="desc">'+it.desc+'</p></div>' +
-      (it.custom ? '<div class="actions"><button onclick="delCustom('+i+')">刪除</button></div>' : '');
+    let html = '<input type="checkbox" class="check" '+(done?"checked":"")+' aria-label="done">' +
+      '<div><div class="name"><a href="'+it.url+'" target="_blank" rel="noopener">'+nm+'</a></div>' +
+      '<div style="margin:.25rem 0">'+(it.tags||[]).map(tg=>'<span class="tag'+(TAGS[tg].hl?" review":"")+'">'+TAGS[tg][lang]+'</span>').join("")+'</div>' +
+      '<p class="desc">'+ds+'</p></div>';
+    if(it.custom) html += '<div class="actions"><button>'+t("del")+'</button></div>';
+    d.innerHTML = html;
     d.querySelector(".check").onchange = e=>{ state[k]=e.target.checked; save(); renderList(); renderProgress(); };
+    const delBtn = d.querySelector(".actions button");
+    if(delBtn) delBtn.onclick = ()=>{ custom.splice(i-ITEMS.length,1); save(); renderList(); renderProgress(); };
     box.appendChild(d);
   });
-  if(activeCat==="tw"){
-    const note=document.createElement("div"); note.className="tip";
-    note.textContent="⚠️ 台灣區需要台灣收件地址，人在國外可請家人代收。";
-    box.prepend(note);
-  }
+}
+function countText(done,total){
+  const m = {zh:"已申請 "+done+" / "+total,en:done+" / "+total+" claimed",de:done+" / "+total+" beantragt",fr:done+" / "+total+" demandés",ja:"申請済み "+done+" / "+total,ko:"신청 완료 "+done+" / "+total,es:done+" / "+total+" solicitadas",hi:done+" / "+total+" आवेदन किए गए"};
+  return m[lang]||m.en;
 }
 function renderProgress(){
   const items = all(), total = items.length;
   const done = items.filter((it,i)=>state[key(it,i)]).length;
   const pct = total? Math.round(done/total*100):0;
-  document.getElementById("pct").textContent = pct + "%";
-  document.getElementById("count").textContent = "已申請 "+done+" / "+total;
+  document.getElementById("pct").textContent = pct+"%";
+  document.getElementById("count").textContent = countText(done,total);
   document.getElementById("barfill").style.width = pct+"%";
 }
 function addCustom(){
   const name=document.getElementById("f-name").value.trim(), url=document.getElementById("f-url").value.trim()||"#",
         desc=document.getElementById("f-desc").value.trim(), cat=document.getElementById("f-cat").value;
-  if(!name){ alert("請填名稱"); return; }
-  custom.push({cat, name, url, desc:desc||"網友推薦的新發現", tags:["新增"], custom:true});
+  if(!name){ alert(t("alert")); return; }
+  const nm={}, ds={};
+  LANGS.forEach(L=>{ nm[L.id]=name; ds[L.id]=desc||t("newDesc"); });
+  custom.push({cat:cat, url:url, tags:["new"], name:nm, desc:ds, custom:true});
   save(); activeCat=cat; renderTabs(); renderList(); renderProgress();
   document.getElementById("f-name").value=""; document.getElementById("f-url").value=""; document.getElementById("f-desc").value="";
 }
-function delCustom(i){ custom.splice(i-DATA.length,1); save(); renderList(); renderProgress(); }
-renderTabs(); renderList(); renderProgress();
+applyLang(); renderTabs(); renderList(); renderProgress();
 </script>
 </body>
 </html>
