@@ -137,6 +137,17 @@ share:{zh:"📣 分享給朋友：",en:"📣 Share:",de:"📣 Teilen:",fr:"📣 
 copied:{zh:"連結已複製！",en:"Link copied!",de:"Link kopiert!",fr:"Lien copié !",ja:"リンクをコピーしました！",ko:"링크가 복사되었습니다!",es:"¡Enlace copiado!",hi:"लिंक कॉपी हो गया!"}
 };
 function sx(k){ return SUGT[k][lang]||SUGT[k].en; }
+const AUTOFILL = {
+zh:"💡 小技巧：到瀏覽器設定開啟「自動填入地址」，填一次，以後每個試用表單都能一鍵帶入。",
+en:"💡 Tip: enable address autofill in your browser settings — fill once, then one-click fill every form after.",
+de:"💡 Tipp: Adress-Autofill in den Browser-Einstellungen aktivieren — einmal ausfüllen, danach per Klick.",
+fr:"💡 Astuce : activez la saisie automatique d'adresse dans votre navigateur — une seule saisie, puis un clic par formulaire.",
+ja:"💡 コツ：ブラウザ設定で住所の自動入力をオンに。一度入力すれば、後はワンクリックで入力できます。",
+ko:"💡 팁: 브라우저 설정에서 주소 자동 완성을 켜두세요. 한 번 입력하면 이후엔 원클릭으로 입력됩니다。",
+es:"💡 Consejo: activa el autocompletado de direcciones en tu navegador: rellena una vez y luego con un clic.",
+hi:"💡 टिप: ब्राउज़र सेटिंग में पता ऑटोफ़िल चालू करें — एक बार भरें, फिर हर फ़ॉर्म एक क्लिक में।"
+};
+function af(){ return AUTOFILL[lang]||AUTOFILL.en; }
 function escapeHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function suggestUrl(){
   var body=encodeURIComponent("## 建議的免費來源\n名稱：\n連結：\n說明：\n\n## 為什麼值得加入\n");
@@ -264,7 +275,7 @@ function applyLang(){
   document.querySelector('meta[name="description"]').setAttribute("content", t("meta"));
   document.getElementById("h-title").textContent = t("title");
   document.getElementById("h-sub").textContent = t("sub");
-  document.getElementById("tip").textContent = t("tip");
+  document.getElementById("tip").innerHTML = escapeHtml(t("tip"))+"<br><br>"+escapeHtml(af());
   document.getElementById("add-title").textContent = t("addTitle");
   document.getElementById("f-name").placeholder = t("ph_name");
   document.getElementById("f-url").placeholder = t("ph_url");
