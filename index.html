@@ -47,6 +47,7 @@
   .share-row a, .share-row button { border:1px solid var(--line); background:var(--card); border-radius:99px; padding:.3rem .85rem; cursor:pointer; font-size:.82rem; color:var(--ink); text-decoration:none; }
   .suggest-btn { display:inline-block; background:var(--accent); color:#fff; padding:.5rem 1.2rem; border-radius:8px; text-decoration:none; margin-top:.4rem; }
   .muted { color:var(--muted); font-size:.9rem; }
+  .sec-title { font-size:1.05rem; margin:1.6rem 0 .8rem; padding-top:1rem; border-top:2px dashed var(--line); }
   /* 未來放廣告：把廣告碼貼在下方預留區 */
   .ad-slot { display:none; }
 </style>
@@ -105,7 +106,9 @@ if(GA_ID && GA_ID.indexOf("G-XXX")!==0){
 }
 const EXTRA = {
 report:{zh:"💬 回報",en:"💬 Report",de:"💬 Melden",fr:"💬 Signaler",ja:"💬 報告する",ko:"💬 신고하기",es:"💬 Informar",hi:"💬 रिपोर्ट करें"},
-clicks:{zh:"點擊（此裝置）",en:"clicks (this device)",de:"Klicks (dieses Gerät)",fr:"clics (cet appareil)",ja:"クリック（この端末）",ko:"클릭(이 기기)",es:"clics (este dispositivo)",hi:"क्लिक (यह डिवाइस)"}
+clicks:{zh:"點擊（此裝置）",en:"clicks (this device)",de:"Klicks (dieses Gerät)",fr:"clics (cet appareil)",ja:"クリック（この端末）",ko:"클릭(이 기기)",es:"clics (este dispositivo)",hi:"क्लिक (यह डिवाइस)"},
+autoTitle:{zh:"🤖 最新自動更新",en:"🤖 Latest auto updates",de:"🤖 Neueste Auto-Updates",fr:"🤖 Dernières mises à jour auto",ja:"🤖 最新の自動更新",ko:"🤖 최신 자동 업데이트",es:"🤖 Últimas actualizaciones automáticas",hi:"🤖 नवीनतम ऑटो अपडेट"},
+autoLoading:{zh:"載入最新情報中…",en:"Loading latest deals…",de:"Neueste Deals werden geladen…",fr:"Chargement des derniers bons plans…",ja:"最新情報を読み込み中…",ko:"최신 정보를 불러오는 중…",es:"Cargando las últimas ofertas…",hi:"नवीनतम ऑफर लोड हो रहे हैं…"}
 };
 function ex(k){ return EXTRA[k][lang] || EXTRA[k].en; }
 function clickCount(ck){
@@ -303,6 +306,23 @@ function renderTabs(){
     tb.appendChild(b);
   });
 }
+function renderAutoFreebies(box){
+  const sec = document.createElement("div");
+  sec.innerHTML = '<h2 class="sec-title">'+ex("autoTitle")+'</h2><div id="auto-list"><p class="muted">'+ex("autoLoading")+'</p></div>';
+  box.appendChild(sec);
+  fetch("data/auto-freebies.json")
+    .then(r=>{ if(!r.ok) throw 0; return r.json(); })
+    .then(arr=>{
+      const el = document.getElementById("auto-list"); if(!el) return;
+      arr = (arr||[]).slice(-10).reverse();
+      if(!arr.length){ el.innerHTML=""; return; }
+      el.innerHTML = arr.map(it=>
+        '<div class="card"><div><div class="name"><a href="'+it.url+'" target="_blank" rel="noopener">'+escapeHtml(it.title)+'</a></div>'+
+        '<p class="desc">'+escapeHtml(it.source||"")+' · '+escapeHtml((it.published||"").slice(0,10))+'</p></div></div>'
+      ).join("");
+    })
+    .catch(()=>{ const el=document.getElementById("auto-list"); if(el) el.innerHTML=""; });
+}
 function renderList(){
   const box = document.getElementById("list"); box.innerHTML = "";
   if(activeCat==="suggest"){ renderSuggestTab(box); return; }
@@ -331,6 +351,7 @@ function renderList(){
     if(delBtn) delBtn.onclick = ()=>{ custom.splice(i-ITEMS.length,1); save(); renderList(); renderProgress(); };
     box.appendChild(d);
   });
+  if(activeCat==="daily"){ renderAutoFreebies(box); }
 }
 function countText(done,total){
   const m = {zh:"已申請 "+done+" / "+total,en:done+" / "+total+" claimed",de:done+" / "+total+" beantragt",fr:done+" / "+total+" demandés",ja:"申請済み "+done+" / "+total,ko:"신청 완료 "+done+" / "+total,es:done+" / "+total+" solicitadas",hi:done+" / "+total+" आवेदन किए गए"};
